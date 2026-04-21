@@ -4,13 +4,40 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Smart Staffing Advisor</title>
+<script>
+(function(){
+  const HASH = '7a3f9e2b1c4d8f6a0e5b7c2d9f1a4e8b3c6d0f2a5e9b4c7d1f3a6e0b8c2d5f';
+  function h(s){let r=0;for(let i=0;i<s.length;i++){r=((r<<5)-r)+s.charCodeAt(i);r|=0;}return Math.abs(r).toString(16).padStart(16,'0');}
+  const stored = sessionStorage.getItem('sa_auth');
+  if(stored === 'ok') return;
+  document.addEventListener('DOMContentLoaded', function(){
+    document.getElementById('app-root').style.display='none';
+    document.getElementById('lock-screen').style.removeProperty('display');
+  });
+  window.__checkPass = function(){
+    const val = document.getElementById('pass-input').value;
+    if(val === 'TAM@2030'){
+      sessionStorage.setItem('sa_auth','ok');
+      document.getElementById('lock-screen').classList.add('hidden');
+      document.getElementById('app-root').style.display='flex';
+      document.getElementById('pass-err').style.display='none';
+    } else {
+      document.getElementById('pass-err').style.display='block';
+      document.getElementById('pass-input').value='';
+      document.getElementById('pass-input').focus();
+      document.getElementById('lock-screen').querySelector('.lk-card').style.animation='shake 0.35s ease';
+      setTimeout(()=>document.getElementById('lock-screen').querySelector('.lk-card').style.animation='',400);
+    }
+  };
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--accent:#6c63ff;--accent2:#ff6584;--accent3:#43e97b;--radius:14px;--radius-sm:8px;--transition:0.22s cubic-bezier(.4,0,.2,1);--font:'Sora',sans-serif;--font-mono:'JetBrains Mono',monospace;}
 [data-theme="dark"]{--bg:#0e0e12;--bg2:#16161e;--bg3:#1e1e28;--bg4:#26263a;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#f0f0f8;--text2:#a0a0b8;--text3:#606078;--glow:0 0 0 0.5px rgba(108,99,255,0.15),0 4px 24px rgba(0,0,0,0.4);--sidebar:#12121a;}
 [data-theme="light"]{--bg:#f2f2f8;--bg2:#ffffff;--bg3:#f7f7fb;--bg4:#ececf5;--border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);--text:#18181e;--text2:#5a5a72;--text3:#9898b0;--glow:0 0 0 0.5px rgba(108,99,255,0.1),0 4px 24px rgba(0,0,0,0.06);--sidebar:#f9f9fd;}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;transition:background var(--transition),color var(--transition);overflow-x:hidden;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;transition:background var(--transition),color var(--transition);overflow-x:hidden;}
 /* SIDEBAR */
 .sidebar{width:240px;min-height:100vh;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:50;transition:width var(--transition);}
 .sidebar.collapsed{width:60px;}
@@ -159,9 +186,45 @@ tr:hover td{background:var(--bg3);}tr:last-child td{border-bottom:none;}
 ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:5px;}
 @media(max-width:900px){.sidebar{width:60px;}.sidebar .nav-label,.sidebar .logo-text{opacity:0;width:0;pointer-events:none;}.main{margin-left:60px;}.metrics{grid-template-columns:repeat(2,1fr);}.g2{grid-template-columns:1fr;}}
 @media(max-width:600px){.ai-panel{width:100%;}.sp{width:100%;}.content{padding:14px;}}
+/* LOCK SCREEN */
+#lock-screen{position:fixed;inset:0;background:#0a0a10;display:flex;align-items:center;justify-content:center;z-index:9999;font-family:'Sora',sans-serif;}
+#lock-screen.hidden{display:none !important;}
+#lock-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(108,99,255,0.15) 0%,transparent 70%);}
+.lk-card{position:relative;background:#16161e;border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:44px 40px;width:100%;max-width:380px;text-align:center;box-shadow:0 0 0 1px rgba(108,99,255,0.1),0 24px 80px rgba(0,0,0,0.6);}
+.lk-icon{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#6c63ff,#ff6584);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 20px;}
+.lk-title{font-size:20px;font-weight:700;color:#f0f0f8;letter-spacing:-0.02em;margin-bottom:6px;}
+.lk-sub{font-size:13px;color:#606078;margin-bottom:28px;}
+.lk-input-wrap{position:relative;margin-bottom:14px;}
+.lk-input-wrap input{width:100%;padding:13px 46px 13px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#f0f0f8;font-size:14px;font-family:'Sora',sans-serif;outline:none;letter-spacing:0.1em;transition:border-color 0.2s;}
+.lk-input-wrap input:focus{border-color:#6c63ff;}
+.lk-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#606078;cursor:pointer;font-size:16px;padding:4px;}
+.lk-btn{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,#6c63ff,#8b5cf6);color:#fff;font-size:14px;font-weight:600;font-family:'Sora',sans-serif;cursor:pointer;transition:opacity 0.2s,transform 0.1s;letter-spacing:0.01em;}
+.lk-btn:hover{opacity:0.9;}.lk-btn:active{transform:scale(0.98);}
+.lk-err{color:#ff8fa5;font-size:12px;margin-top:10px;display:none;animation:fadeUp 0.2s ease;}
+.lk-footer{margin-top:24px;font-size:11px;color:#3a3a50;}
+@keyframes shake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-8px);}40%,80%{transform:translateX(8px);}}
 </style>
 </head>
 <body>
+
+<!-- LOCK SCREEN -->
+<div id="lock-screen">
+  <div class="lk-card">
+    <div class="lk-icon">🔒</div>
+    <div class="lk-title">Smart Staffing Advisor</div>
+    <div class="lk-sub">This tool is confidential. Enter your password to continue.</div>
+    <div class="lk-input-wrap">
+      <input type="password" id="pass-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')__checkPass()">
+      <button class="lk-eye" onclick="(function(){const i=document.getElementById('pass-input');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';}).call(this)">👁</button>
+    </div>
+    <button class="lk-btn" onclick="__checkPass()">Unlock →</button>
+    <div class="lk-err" id="pass-err">Incorrect password. Please try again.</div>
+    <div class="lk-footer">TAM Consulting & Digital Solutions · Confidential</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-root" style="display:none;width:100%;min-height:100vh;">
 
 <aside class="sidebar" id="sidebar">
   <div class="s-logo">
@@ -441,6 +504,11 @@ function toggleSP(){document.getElementById('stp').classList.toggle('open');}
 function toggleCol(col,cb){if(cb.checked)hidCols.delete(col);else hidCols.add(col);renderTable();}
 
 computeMetrics();buildAlerts();buildProjects();populateFilters();renderTable();setTheme('dark');
+if(sessionStorage.getItem('sa_auth')==='ok'){
+  document.getElementById('lock-screen').classList.add('hidden');
+  document.getElementById('app-root').style.display='flex';
+}
 </script>
+</div><!-- /app-root -->
 </body>
 </html>
