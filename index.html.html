@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Staffing Advisor</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#6c63ff;--accent2:#ff6584;--accent3:#43e97b;--radius:14px;--radius-sm:8px;--transition:0.22s cubic-bezier(.4,0,.2,1);--font:'Sora',sans-serif;--font-mono:'JetBrains Mono',monospace;}
+[data-theme="dark"]{--bg:#0e0e12;--bg2:#16161e;--bg3:#1e1e28;--bg4:#26263a;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#f0f0f8;--text2:#a0a0b8;--text3:#606078;--glow:0 0 0 0.5px rgba(108,99,255,0.15),0 4px 24px rgba(0,0,0,0.4);--sidebar:#12121a;}
+[data-theme="light"]{--bg:#f2f2f8;--bg2:#ffffff;--bg3:#f7f7fb;--bg4:#ececf5;--border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);--text:#18181e;--text2:#5a5a72;--text3:#9898b0;--glow:0 0 0 0.5px rgba(108,99,255,0.1),0 4px 24px rgba(0,0,0,0.06);--sidebar:#f9f9fd;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;transition:background var(--transition),color var(--transition);overflow-x:hidden;}
+/* SIDEBAR */
+.sidebar{width:240px;min-height:100vh;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:50;transition:width var(--transition);}
+.sidebar.collapsed{width:60px;}
+.s-logo{padding:20px 16px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
+.logo-icon{width:34px;height:34px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:16px;}
+.logo-text{font-size:14px;font-weight:600;letter-spacing:-0.02em;white-space:nowrap;overflow:hidden;transition:opacity var(--transition);}
+.logo-text span{color:var(--accent);}
+.nav{padding:10px 8px;flex:1;display:flex;flex-direction:column;gap:2px;}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--text2);border:none;background:none;text-align:left;width:100%;transition:all var(--transition);white-space:nowrap;overflow:hidden;font-family:var(--font);}
+.nav-item:hover{background:var(--bg4);color:var(--text);}
+.nav-item.active{background:rgba(108,99,255,0.12);color:var(--accent);font-weight:500;}
+.nav-icon{font-size:16px;flex-shrink:0;}
+.nav-label{overflow:hidden;transition:opacity var(--transition),width var(--transition);}
+.sidebar.collapsed .nav-label,.sidebar.collapsed .logo-text{opacity:0;width:0;pointer-events:none;}
+.s-footer{padding:10px 8px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px;}
+/* MAIN */
+.main{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh;transition:margin-left var(--transition);}
+.main.expanded{margin-left:60px;}
+/* TOPBAR */
+.topbar{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border);background:var(--bg2);position:sticky;top:0;z-index:40;transition:background var(--transition);}
+.topbar-l{display:flex;align-items:center;gap:12px;}
+.ic-btn{width:34px;height:34px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg3);cursor:pointer;color:var(--text2);font-size:15px;display:flex;align-items:center;justify-content:center;transition:all var(--transition);}
+.ic-btn:hover{background:var(--bg4);color:var(--text);}
+.page-title{font-size:15px;font-weight:600;letter-spacing:-0.02em;}
+.topbar-r{display:flex;align-items:center;gap:8px;}
+.today-txt{font-size:11px;color:var(--text3);font-family:var(--font-mono);}
+/* CONTENT */
+.content{padding:24px;flex:1;}
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.mc{background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);padding:20px;position:relative;overflow:hidden;cursor:pointer;transition:all var(--transition);box-shadow:var(--glow);animation:fadeUp 0.4s ease both;}
+.mc:nth-child(1){animation-delay:0.05s;}.mc:nth-child(2){animation-delay:0.1s;}.mc:nth-child(3){animation-delay:0.15s;}.mc:nth-child(4){animation-delay:0.2s;}
+.mc:hover{transform:translateY(-2px);border-color:var(--border2);}
+.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--mc-c,var(--accent));}
+.mc.cp{--mc-c:var(--accent);}.mc.cg{--mc-c:#43e97b;}.mc.ca{--mc-c:#f59e0b;}.mc.cr{--mc-c:#ff6584;}
+.m-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px;}
+.m-val{font-size:32px;font-weight:700;letter-spacing:-0.03em;font-family:var(--font-mono);}
+.m-val.cp{color:var(--accent);}.m-val.cg{color:#43e97b;}.m-val.ca{color:#f59e0b;}.m-val.cr{color:#ff6584;}
+.m-sub{font-size:11px;color:var(--text3);margin-top:6px;}
+.m-bg{position:absolute;right:14px;bottom:8px;font-size:38px;opacity:0.06;}
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.card{background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:var(--glow);transition:background var(--transition),border-color var(--transition);}
+.card-h{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-t{font-size:13px;font-weight:600;}
+.card-b{padding:14px 18px;}
+.cbadge{font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(108,99,255,0.12);color:var(--accent);font-weight:600;}
+/* ALERTS */
+.ai-item{padding:11px 13px;border-radius:var(--radius-sm);font-size:12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;line-height:1.6;border:1px solid transparent;}
+.ai-item:last-child{margin-bottom:0;}
+.a-r{background:rgba(255,101,132,0.08);color:#ff8fa5;border-color:rgba(255,101,132,0.2);}
+.a-a{background:rgba(245,158,11,0.08);color:#fbbf24;border-color:rgba(245,158,11,0.2);}
+[data-theme="light"] .a-r{background:#fff1f3;color:#c0143c;border-color:#fca5a5;}
+[data-theme="light"] .a-a{background:#fffbeb;color:#92400e;border-color:#fcd34d;}
+.ai{flex-shrink:0;margin-top:1px;}
+/* TABLE */
+.tabs{display:flex;gap:2px;padding:4px;background:var(--bg3);border-bottom:1px solid var(--border);}
+.tab{font-size:12px;padding:7px 14px;cursor:pointer;color:var(--text2);border:none;background:none;border-radius:var(--radius-sm);font-weight:500;transition:all var(--transition);font-family:var(--font);}
+.tab.active{background:var(--bg2);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,0.12);}
+.s-row{display:flex;gap:8px;padding:10px 14px;background:var(--bg3);border-bottom:1px solid var(--border);}
+.s-row input,.s-row select{font-size:12px;padding:7px 10px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg2);color:var(--text);outline:none;font-family:var(--font);transition:border-color var(--transition);}
+.s-row input{flex:1;}.s-row input:focus,.s-row select:focus{border-color:var(--accent);}
+.s-row select option{background:var(--bg2);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{text-align:left;padding:9px 18px;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:0.07em;background:var(--bg3);border-bottom:1px solid var(--border);}
+td{padding:11px 18px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:hover td{background:var(--bg3);}tr:last-child td{border-bottom:none;}
+.n-name{font-weight:500;font-size:12px;}.n-role{font-size:11px;color:var(--text3);margin-top:2px;}
+.badge{display:inline-block;font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600;}
+.bs{background:rgba(67,233,123,0.12);color:#43e97b;}
+.bb{background:rgba(245,158,11,0.12);color:#f59e0b;}
+.bk{background:rgba(108,99,255,0.12);color:#9d96ff;}
+.bl{background:rgba(255,101,132,0.12);color:#ff8fa5;}
+[data-theme="light"] .bs{background:#d1fae5;color:#065f46;}
+[data-theme="light"] .bb{background:#fef3c7;color:#92400e;}
+[data-theme="light"] .bk{background:#e0e7ff;color:#3730a3;}
+[data-theme="light"] .bl{background:#ffe4e6;color:#9f1239;}
+.flag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;}
+.fr{background:rgba(255,101,132,0.12);color:#ff8fa5;}
+.fa{background:rgba(245,158,11,0.12);color:#f59e0b;}
+[data-theme="light"] .fr{background:#ffe4e6;color:#9f1239;}
+[data-theme="light"] .fa{background:#fef3c7;color:#92400e;}
+.ask-btn{font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid rgba(108,99,255,0.3);background:rgba(108,99,255,0.08);cursor:pointer;color:var(--accent);font-family:var(--font);font-weight:500;transition:all var(--transition);}
+.ask-btn:hover{background:rgba(108,99,255,0.18);}
+/* PROJ ITEMS */
+.pi{padding:10px 0;border-bottom:1px solid var(--border);}
+.pi:last-child{border-bottom:none;}
+.pi-name{font-size:12px;font-weight:500;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+.pc{font-size:10px;padding:1px 7px;border-radius:10px;background:rgba(108,99,255,0.1);color:var(--accent);font-weight:600;}
+.pi-meta{font-size:11px;color:var(--text3);display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+/* AI PANEL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:99;opacity:0;pointer-events:none;transition:opacity var(--transition);}
+.overlay.open{opacity:1;pointer-events:all;}
+.ai-panel{position:fixed;right:0;top:0;bottom:0;width:420px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:100;transform:translateX(100%);transition:transform 0.3s cubic-bezier(.4,0,.2,1);}
+.ai-panel.open{transform:translateX(0);}
+.ap-head{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,rgba(108,99,255,0.12),rgba(255,101,132,0.06));}
+.ap-emp{display:flex;align-items:center;gap:10px;}
+.ap-av{width:36px;height:36px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
+.ap-name{font-size:13px;font-weight:600;}
+.ap-title{font-size:11px;color:var(--text3);margin-top:1px;}
+.cl-btn{background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;color:var(--text2);font-size:11px;transition:all var(--transition);font-family:var(--font);}
+.cl-btn:hover{color:var(--text);}
+.ai-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
+.ai-msgs::-webkit-scrollbar{width:4px;}.ai-msgs::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px;}
+.mu{background:linear-gradient(135deg,rgba(108,99,255,0.18),rgba(108,99,255,0.08));border:1px solid rgba(108,99,255,0.2);border-radius:12px 12px 2px 12px;padding:10px 13px;font-size:12px;align-self:flex-end;max-width:85%;line-height:1.6;}
+.ma{background:var(--bg3);border:1px solid var(--border);border-radius:12px 12px 12px 2px;padding:12px 14px;font-size:12px;line-height:1.65;max-width:92%;}
+.ma strong{color:var(--accent);font-weight:600;}
+.dots{display:inline-flex;gap:4px;align-items:center;padding:4px 2px;}
+.dots span{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:dot 1.2s infinite;}
+.dots span:nth-child(2){animation-delay:0.2s;}.dots span:nth-child(3){animation-delay:0.4s;}
+@keyframes dot{0%,80%,100%{opacity:0.2;transform:scale(0.8);}40%{opacity:1;transform:scale(1);}}
+.qbtns{padding:8px 14px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border);}
+.qb{font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:var(--font);transition:all var(--transition);}
+.qb:hover{background:var(--bg4);color:var(--text);border-color:var(--accent);}
+.ai-in-row{padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px;}
+.ai-in-row input{flex:1;font-size:12px;padding:9px 12px;border:1px solid var(--border2);border-radius:10px;background:var(--bg3);color:var(--text);outline:none;font-family:var(--font);transition:border-color var(--transition);}
+.ai-in-row input:focus{border-color:var(--accent);}
+.snd-btn{padding:9px 16px;background:linear-gradient(135deg,var(--accent),#8b5cf6);color:#fff;border:none;border-radius:10px;font-size:12px;cursor:pointer;font-family:var(--font);font-weight:500;transition:all var(--transition);}
+.snd-btn:hover{opacity:0.88;}.snd-btn:disabled{opacity:0.4;cursor:not-allowed;}
+/* SETTINGS */
+.sp{position:fixed;right:0;top:0;bottom:0;width:300px;background:var(--bg2);border-left:1px solid var(--border);z-index:102;transform:translateX(100%);transition:transform 0.3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;}
+.sp.open{transform:translateX(0);}
+.sp-head{padding:18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.sp-head h3{font-size:14px;font-weight:600;}
+.sp-body{padding:20px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:22px;}
+.sg h4{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:11px;font-weight:600;}
+.th-toggle{display:flex;gap:8px;}
+.th-opt{flex:1;padding:9px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg3);cursor:pointer;text-align:center;font-size:12px;font-family:var(--font);color:var(--text2);transition:all var(--transition);font-weight:500;}
+.th-opt.active{border-color:var(--accent);background:rgba(108,99,255,0.1);color:var(--accent);}
+.swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.sw{height:32px;border-radius:var(--radius-sm);cursor:pointer;border:2px solid transparent;transition:all var(--transition);}
+.sw.active{border-color:var(--text);transform:scale(1.08);}
+.sw:hover{transform:scale(1.05);}
+.sr{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;}
+.sr label{font-size:12px;color:var(--text2);}
+.sr input[type="range"]{width:90px;accent-color:var(--accent);cursor:pointer;}
+.tgl{position:relative;width:36px;height:20px;flex-shrink:0;}
+.tgl input{opacity:0;width:0;height:0;}
+.ts{position:absolute;inset:0;background:var(--bg4);border-radius:20px;cursor:pointer;transition:all var(--transition);border:1px solid var(--border2);}
+.ts:before{content:'';position:absolute;height:14px;width:14px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:all var(--transition);}
+.tgl input:checked + .ts{background:var(--accent);border-color:var(--accent);}
+.tgl input:checked + .ts:before{transform:translateX(16px);}
+/* MISC */
+.empty{text-align:center;color:var(--text3);font-size:12px;padding:28px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:5px;}
+@media(max-width:900px){.sidebar{width:60px;}.sidebar .nav-label,.sidebar .logo-text{opacity:0;width:0;pointer-events:none;}.main{margin-left:60px;}.metrics{grid-template-columns:repeat(2,1fr);}.g2{grid-template-columns:1fr;}}
+@media(max-width:600px){.ai-panel{width:100%;}.sp{width:100%;}.content{padding:14px;}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="s-logo">
+    <div class="logo-icon">🧠</div>
+    <div class="logo-text">Staff<span>AI</span></div>
+  </div>
+  <nav class="nav">
+    <button class="nav-item active" onclick="setNav(this,'Dashboard')"><span class="nav-icon">⬡</span><span class="nav-label">Dashboard</span></button>
+    <button class="nav-item" onclick="setNav(this,'Employees')"><span class="nav-icon">◎</span><span class="nav-label">Employees</span></button>
+    <button class="nav-item" onclick="setNav(this,'Projects')"><span class="nav-icon">◈</span><span class="nav-label">Projects</span></button>
+    <button class="nav-item" onclick="setNav(this,'Alerts')"><span class="nav-icon">⬗</span><span class="nav-label">Alerts <span id="adot" style="font-size:9px;background:#ff6584;color:#fff;padding:1px 6px;border-radius:8px;margin-left:2px;"></span></span></button>
+  </nav>
+  <div class="s-footer">
+    <button class="nav-item" onclick="toggleSP()"><span class="nav-icon">⚙</span><span class="nav-label">Settings</span></button>
+  </div>
+</aside>
+
+<div class="main" id="main">
+  <div class="topbar">
+    <div class="topbar-l">
+      <button class="ic-btn" onclick="toggleSidebar()">☰</button>
+      <span class="page-title" id="ptitle">Dashboard</span>
+    </div>
+    <div class="topbar-r">
+      <button class="ic-btn" title="Toggle theme" onclick="toggleTheme()">☀</button>
+      <button class="ic-btn" onclick="toggleSP()">⚙</button>
+      <span class="today-txt" id="tdate"></span>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="metrics">
+      <div class="mc cp"><div class="m-lbl">Total active</div><div class="m-val cp" id="mt">—</div><div class="m-sub">employees</div><div class="m-bg">👥</div></div>
+      <div class="mc cg"><div class="m-lbl">Staffed</div><div class="m-val cg" id="ms">—</div><div class="m-sub" id="msp">on projects</div><div class="m-bg">✓</div></div>
+      <div class="mc ca"><div class="m-lbl">On the beach</div><div class="m-val ca" id="mb">—</div><div class="m-sub" id="mbp">unassigned</div><div class="m-bg">⏳</div></div>
+      <div class="mc cr"><div class="m-lbl">Leave / booked</div><div class="m-val cr" id="ml">—</div><div class="m-sub">incl. maternity</div><div class="m-bg">📋</div></div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <div class="card-h"><span class="card-t">⬗ Critical alerts</span><span class="cbadge" id="ac">—</span></div>
+        <div class="card-b" id="alc"><div class="empty">Loading…</div></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-t">◈ Projects ending soon</span><span class="cbadge">next 90 days</span></div>
+        <div class="card-b" id="pjc"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><span class="card-t">◎ Team roster</span><span class="cbadge" id="rc">—</span></div>
+      <div class="tabs">
+        <button class="tab active" onclick="setTab('all',this)">All</button>
+        <button class="tab" onclick="setTab('Beach',this)">On the beach</button>
+        <button class="tab" onclick="setTab('leave',this)">Leave / maternity</button>
+        <button class="tab" onclick="setTab('Staffed',this)">Staffed</button>
+      </div>
+      <div class="s-row">
+        <input type="text" id="srch" placeholder="🔍  Search name, project, level…" oninput="renderTable()">
+        <select id="pf" onchange="renderTable()"><option value="">All projects</option></select>
+        <select id="tf" onchange="renderTable()"><option value="">All levels</option></select>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Employee</th><th>Status</th><th>Project</th><th>Available after</th><th>Flag</th><th></th></tr></thead>
+          <tbody id="tb"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov" onclick="closePanel()"></div>
+
+<div class="ai-panel" id="aip">
+  <div class="ap-head">
+    <div class="ap-emp">
+      <div class="ap-av" id="apav">AI</div>
+      <div><div class="ap-name" id="apn">AI Advisor</div><div class="ap-title" id="apt">Smart Staffing</div></div>
+    </div>
+    <button class="cl-btn" onclick="closePanel()">✕ Close</button>
+  </div>
+  <div class="ai-msgs" id="aimsg"></div>
+  <div class="qbtns" id="qb" style="display:none">
+    <button class="qb" onclick="qask('What should be the next project for this person?')">Next project?</button>
+    <button class="qb" onclick="qask('What are the risks of keeping this person unassigned?')">Beach risk?</button>
+    <button class="qb" onclick="qask('Who could replace this person if needed?')">Who replaces?</button>
+    <button class="qb" onclick="qask('Give me a leadership summary for this employee.')">Leadership note</button>
+  </div>
+  <div class="ai-in-row">
+    <input type="text" id="ain" placeholder="Ask anything about this employee…" onkeydown="if(event.key==='Enter')send()">
+    <button class="snd-btn" id="sbtn" onclick="send()">Send ↗</button>
+  </div>
+</div>
+
+<div class="sp" id="stp">
+  <div class="sp-head"><h3>⚙ Settings</h3><button class="cl-btn" onclick="toggleSP()">✕</button></div>
+  <div class="sp-body">
+    <div class="sg">
+      <h4>Theme</h4>
+      <div class="th-toggle">
+        <button class="th-opt active" id="td" onclick="setTheme('dark')">🌙 Dark</button>
+        <button class="th-opt" id="tl" onclick="setTheme('light')">☀ Light</button>
+      </div>
+    </div>
+    <div class="sg">
+      <h4>Accent color</h4>
+      <div class="swatches">
+        <div class="sw active" style="background:#6c63ff" onclick="setAccent('#6c63ff',this)"></div>
+        <div class="sw" style="background:#0ea5e9" onclick="setAccent('#0ea5e9',this)"></div>
+        <div class="sw" style="background:#10b981" onclick="setAccent('#10b981',this)"></div>
+        <div class="sw" style="background:#f59e0b" onclick="setAccent('#f59e0b',this)"></div>
+        <div class="sw" style="background:#ef4444" onclick="setAccent('#ef4444',this)"></div>
+        <div class="sw" style="background:#ec4899" onclick="setAccent('#ec4899',this)"></div>
+        <div class="sw" style="background:#14b8a6" onclick="setAccent('#14b8a6',this)"></div>
+        <div class="sw" style="background:#8b5cf6" onclick="setAccent('#8b5cf6',this)"></div>
+      </div>
+    </div>
+    <div class="sg">
+      <h4>Display</h4>
+      <div class="sr"><label>Font size</label><input type="range" min="11" max="16" value="13" oninput="document.body.style.fontSize=this.value+'px'"></div>
+      <div class="sr"><label>Compact rows</label><label class="tgl"><input type="checkbox" id="ctog" onchange="renderTable()"><span class="ts"></span></label></div>
+      <div class="sr"><label>Show avatars</label><label class="tgl"><input type="checkbox" id="avtog" checked onchange="showAv=this.checked;renderTable()"><span class="ts"></span></label></div>
+    </div>
+    <div class="sg">
+      <h4>Table columns</h4>
+      <div class="sr"><label>Available after</label><label class="tgl"><input type="checkbox" checked onchange="toggleCol('ca',this)"><span class="ts"></span></label></div>
+      <div class="sr"><label>Flags</label><label class="tgl"><input type="checkbox" checked onchange="toggleCol('cf',this)"><span class="ts"></span></label></div>
+    </div>
+    <div class="sg">
+      <h4>Data source</h4>
+      <div style="font-size:12px;color:var(--text3);line-height:1.8;">
+        File: <strong style="color:var(--text2)">Staffing_Master.xlsx</strong><br>
+        Records: <strong style="color:var(--text2)" id="drec">—</strong><br>
+        Loaded: <strong style="color:var(--text2)" id="dld">—</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const EMP=[{"id":"1366","name":"Nouran AbdelAzeem","title":"Sr Manager","status":"Beach","project":"BD","available_after":null,"rc":"Strategy"},{"id":"1352","name":"Sara Alsaleh","title":"Sr Manager","status":"Beach","project":"BD","available_after":null,"rc":""},{"id":"1365","name":"Seif Merghany","title":"Associate","status":"Beach","project":"Beach","available_after":null,"rc":"Operation"},{"id":"1308","name":"Ayman Mustafa","title":"Associate","status":"Beach","project":"Beach","available_after":null,"rc":"Operation"},{"id":"1502","name":"Sultan Bniali","title":"Analyst","status":"Beach","project":"Beach","available_after":null,"rc":""},{"id":"1148","name":"Muzoon Almodarra","title":"Manager","status":"Beach","project":"Beach","available_after":null,"rc":""},{"id":"1373","name":"Mohammed AlAbbasi","title":"Sr Analyst","status":"Beach","project":"Beach","available_after":null,"rc":""},{"id":"1306","name":"Mohammad Bashammakh","title":"Sr Manager","status":"Beach","project":"Beach/BD","available_after":null,"rc":"PMO"},{"id":"1305","name":"Doaa Elrahman Ali","title":"Manager","status":"Beach","project":"Maternity/unpaid","available_after":null,"rc":"Operation"},{"id":"1144","name":"Abeer Bashatah","title":"Sr Manager","status":"Beach","project":"Maternity","available_after":null,"rc":""},{"id":"1158","name":"Mohamed Negm","title":"Sr Manager","status":"Booked","project":"BD","available_after":null,"rc":"Strategy"},{"id":"1363","name":"Rayan Abu Omar","title":"Sr Analyst","status":"Booked","project":"Beach","available_after":null,"rc":""},{"id":"1333","name":"Youssef Mahmoud","title":"Sr Associate","status":"Staffed","project":"Policy Lab Phase 3","available_after":"2026-02-26","rc":"Strategy"},{"id":"1350","name":"Omar Sbai","title":"Sr Associate","status":"Staffed","project":"Policy Lab Phase 3","available_after":"2026-02-26","rc":"Strategy"},{"id":"1355","name":"Basil Abu Mallooh","title":"Associate","status":"Staffed","project":"Policy Lab Phase 3","available_after":"2026-02-26","rc":"Operation"},{"id":"1407","name":"Abdullah Alratroot","title":"Director","status":"Staffed","project":"Policy Lab Phase 3","available_after":"2026-02-26","rc":"Strategy"},{"id":"1411","name":"Bassim Ashraf","title":"Sr Analyst","status":"Staffed","project":"Policy Lab Phase 3","available_after":"2026-02-26","rc":"Operation"},{"id":"1434","name":"Muslim Ahmad","title":"Associate","status":"Staffed","project":"Policy Lab Phase 3","available_after":"2026-02-26","rc":"Operation"},{"id":"1440","name":"Amr Hassan","title":"Sr Manager","status":"Staffed","project":"Policy Lab Phase 3","available_after":"2026-02-26","rc":"Strategy"},{"id":"1446","name":"Mohammed Farrash","title":"Analyst","status":"Staffed","project":"Tarjim 2025","available_after":"2026-06-01","rc":"Strategy"},{"id":"1335","name":"Maimouna Melibari","title":"Sr Manager","status":"Staffed","project":"Tarjim 2025","available_after":"2026-08-13","rc":"Operation"},{"id":"1310","name":"Layan Sameer","title":"Associate","status":"Staffed","project":"TPA 4","available_after":"2026-08-17","rc":"Strategy"},{"id":"1404","name":"Abdulrahman Alshowati","title":"Associate","status":"Staffed","project":"STA - Brand Operations 2","available_after":"2026-09-20","rc":"Operation"},{"id":"1132","name":"Alaa Azzan","title":"Sr Associate","status":"Staffed","project":"KSC 2","available_after":"2026-10-01","rc":"Operation"},{"id":"1183","name":"Mohammed Jamil","title":"Sr Manager","status":"Staffed","project":"KSC 2","available_after":"2026-10-01","rc":"Operation"},{"id":"1361","name":"Marwa Almarri","title":"Associate","status":"Staffed","project":"KSC 2","available_after":"2026-10-01","rc":"Operation"},{"id":"1408","name":"Ibrahim Badawy","title":"Manager","status":"Staffed","project":"QoL - Digital Heatmap Program","available_after":"2026-10-01","rc":"PMO"},{"id":"1351","name":"Mohamed Rashdan","title":"Sr Manager","status":"Staffed","project":"QoL - Digital Heatmap Program","available_after":"2026-10-01","rc":"Operation"},{"id":"1112","name":"Faisal Alborno","title":"Director","status":"Staffed","project":"Angham Alwatan","available_after":"2026-12-24","rc":""},{"id":"1497","name":"Deema Alaskar","title":"Analyst","status":"Staffed","project":"Angham Alwatan","available_after":"2026-12-24","rc":"Operation"},{"id":"1499","name":"Saud Alfehaid","title":"Analyst","status":"Staffed","project":"Angham Alwatan","available_after":"2026-12-24","rc":"Operation"},{"id":"1489","name":"Rakan Albaz","title":"Sr Associate","status":"Staffed","project":"Angham Alwatan","available_after":"2026-12-24","rc":"Operation"},{"id":"1391","name":"Aws Alkhaldi","title":"Manager","status":"Staffed","project":"Angham Alwatan","available_after":"2026-12-24","rc":"Strategy"},{"id":"1185","name":"Ameera Albasseet","title":"Sr Associate","status":"Staffed","project":"Culinary Saudization Program","available_after":"2027-01-14","rc":"Operation"},{"id":"1422","name":"Maher Subhi","title":"Associate","status":"Staffed","project":"Culinary Saudization Program","available_after":"2027-01-14","rc":"Operation"},{"id":"1396","name":"Abdulaziz Alsaqqar","title":"Sr Associate","status":"Staffed","project":"Culinary Saudization Program","available_after":"2027-01-14","rc":"PMO"},{"id":"1464","name":"Mohammed Mujalli","title":"Analyst","status":"Staffed","project":"Culinary Saudization Program","available_after":"2027-01-14","rc":"Strategy"},{"id":"1349","name":"Yasin Mandi","title":"Sr Manager","status":"Staffed","project":"Culinary Saudization Program","available_after":"2027-01-14","rc":"Strategy"},{"id":"1432","name":"Hatim Ali","title":"Sr Director","status":"Staffed","project":"Culinary Saudization Program","available_after":"2027-01-14","rc":"Operation"},{"id":"1405","name":"Hamza Aldraimli","title":"Sr Analyst","status":"Staffed","project":"Filmmakers S5","available_after":"2027-02-04","rc":"Operation"},{"id":"1439","name":"Redhwan Mohammad","title":"Sr Associate","status":"Staffed","project":"Filmmakers S5","available_after":"2027-02-04","rc":"Strategy"},{"id":"1413","name":"Abdullah Alomerene","title":"Associate","status":"Staffed","project":"Filmmakers S5","available_after":"2027-02-04","rc":"Strategy"},{"id":"1206","name":"Hanaa Ali","title":"Manager","status":"Staffed","project":"Filmmakers S5","available_after":"2027-02-04","rc":"Operation"},{"id":"1173","name":"Njood Othman","title":"Sr Associate","status":"Staffed","project":"Green Riyadh 2","available_after":"2027-02-25","rc":""},{"id":"1358","name":"Faris Alshehri","title":"Associate","status":"Staffed","project":"Green Riyadh 2","available_after":"2027-02-25","rc":"Strategy"},{"id":"1272","name":"Asim Salih","title":"Manager","status":"Staffed","project":"Green Riyadh 2","available_after":"2027-02-25","rc":"Operation"},{"id":"1369","name":"Ihsan Skeik","title":"Associate","status":"Staffed","project":"Green Riyadh 2","available_after":"2027-02-25","rc":"Operation"},{"id":"1388","name":"Mostafa Omran","title":"Sr Director","status":"Staffed","project":"Green Riyadh 2","available_after":"2027-02-25","rc":"PMO"},{"id":"1442","name":"Ahmed Farag Omar","title":"Sr Manager","status":"Staffed","project":"Green Riyadh 2","available_after":"2027-02-25","rc":"Strategy"},{"id":"1177","name":"Asma Aljerb","title":"Manager","status":"Staffed","project":"Green Riyadh 2","available_after":"2027-02-25","rc":"Strategy"},{"id":"1453","name":"Hassan Gebril","title":"Sr Manager","status":"Staffed","project":"ETEC","available_after":"2027-08-12","rc":"PMO"},{"id":"1454","name":"Abdelrahman Sheta","title":"Manager","status":"Staffed","project":"ETEC","available_after":"2027-08-12","rc":"PMO"},{"id":"1451","name":"Ahmed Elmasry","title":"Sr Director","status":"Staffed","project":"ETEC","available_after":"2027-08-12","rc":"PMO"},{"id":"1452","name":"Karim Salem","title":"Sr Manager","status":"Staffed","project":"ETEC","available_after":"2027-08-12","rc":"PMO"},{"id":"1398","name":"Najla Alhamad","title":"Sr Associate","status":"Staffed","project":"Kader 2","available_after":"2027-12-29","rc":"Operation"},{"id":"1337","name":"Reem Alharkan","title":"Associate","status":"Staffed","project":"Kader 2","available_after":"2027-12-29","rc":"Operation"},{"id":"1488","name":"Abdulaziz Binyousef","title":"Analyst","status":"Staffed","project":"Kader 2","available_after":"2027-12-29","rc":"Operation"}];
+
+const TODAY=new Date();
+const PALETTE=['#6c63ff','#0ea5e9','#10b981','#f59e0b','#ef4444','#ec4899','#14b8a6','#8b5cf6'];
+let curTab='all',curEmp=null,chatHist=[],showAv=true,hidCols=new Set();
+
+document.getElementById('tdate').textContent=TODAY.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+document.getElementById('drec').textContent=EMP.length+' rows';
+document.getElementById('dld').textContent=TODAY.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+
+function du(s){if(!s)return null;return Math.round((new Date(s)-TODAY)/86400000);}
+function fd(s){if(!s)return '—';return new Date(s).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
+function ini(n){return n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();}
+function ac(n){let h=0;for(let c of n)h=(h*31+c.charCodeAt(0))%PALETTE.length;return PALETTE[h];}
+function getFlag(e){const p=(e.project||'').toLowerCase();if(p.includes('maternity'))return{t:'Maternity',c:'r'};if(e.status==='Beach'&&!e.available_after)return{t:'No end date',c:'r'};if(e.available_after){const d=du(e.available_after);if(d!==null&&d<0&&e.status==='Staffed')return{t:'Overdue',c:'r'};if(d!==null&&d<=45&&d>=0&&e.status==='Staffed')return{t:d+'d left',c:'a'};}return null;}
+function bc(s){if(s==='Staffed')return'bs';if(s==='Beach')return'bb';if(s==='Booked')return'bk';return'bl';}
+
+function computeMetrics(){
+  const names=new Set(EMP.map(e=>e.name));
+  const st=EMP.filter(e=>e.status==='Staffed').length;
+  const bch=EMP.filter(e=>e.status==='Beach').length;
+  const lv=EMP.filter(e=>e.status==='Booked'||(e.status==='Beach'&&(e.project||'').toLowerCase().includes('maternity'))).length;
+  document.getElementById('mt').textContent=names.size;
+  document.getElementById('ms').textContent=st;
+  document.getElementById('msp').textContent=Math.round(st/EMP.length*100)+'% utilization';
+  document.getElementById('mb').textContent=bch;
+  document.getElementById('mbp').textContent=Math.round(bch/EMP.length*100)+'% of team';
+  document.getElementById('ml').textContent=lv;
+}
+
+function buildAlerts(){
+  const bnd=EMP.filter(e=>e.status==='Beach'&&!e.available_after&&!(e.project||'').toLowerCase().includes('maternity'));
+  const mat=EMP.filter(e=>(e.project||'').toLowerCase().includes('maternity'));
+  const e60=EMP.filter(e=>{const d=du(e.available_after);return d!==null&&d>=0&&d<=60&&e.status==='Staffed';});
+  const ovd=EMP.filter(e=>{const d=du(e.available_after);return d!==null&&d<0&&e.status==='Staffed';});
+  const al=[];
+  if(bnd.length)al.push({c:'r',i:'⚠',t:`<strong>${bnd.length} employees</strong> on the beach with no availability date — ${bnd.slice(0,3).map(e=>e.name).join(', ')}${bnd.length>3?` +${bnd.length-3} more`:''}`});
+  if(mat.length)al.push({c:'r',i:'⚠',t:`<strong>${mat.length} employees</strong> on maternity — verify replacements: ${mat.map(e=>e.name).join(', ')}`});
+  if(ovd.length)al.push({c:'r',i:'⚠',t:`<strong>${ovd.length} employees</strong> past end date — records may need updating`});
+  if(e60.length){const pj=[...new Set(e60.map(e=>e.project))];al.push({c:'a',i:'!',t:`<strong>${e60.length} employees</strong> finishing in 60 days — projects: ${pj.slice(0,3).join(', ')}${pj.length>3?` +${pj.length-3}`:''}`});}
+  document.getElementById('ac').textContent=al.length+' alerts';
+  document.getElementById('adot').textContent=al.length;
+  document.getElementById('alc').innerHTML=al.length?al.map(a=>`<div class="ai-item a-${a.c}"><span class="ai">${a.i}</span><div>${a.t}</div></div>`).join(''):'<div class="empty">No critical alerts</div>';
+}
+
+function buildProjects(){
+  const now=TODAY.getTime(),in90=now+90*86400000,pj={};
+  EMP.forEach(e=>{if(!e.available_after||e.status!=='Staffed')return;const d=new Date(e.available_after).getTime();if(d>=now&&d<=in90){if(!pj[e.project])pj[e.project]={date:e.available_after,count:0,titles:[]};pj[e.project].count++;if(!pj[e.project].titles.includes(e.title))pj[e.project].titles.push(e.title);}});
+  const ent=Object.entries(pj).sort((a,b)=>new Date(a[1].date)-new Date(b[1].date));
+  document.getElementById('pjc').innerHTML=ent.length?ent.map(([n,i])=>{const d=du(i.date);return`<div class="pi"><div class="pi-name">${n}<span class="pc">${i.count} people</span></div><div class="pi-meta"><span>${fd(i.date)}</span><span class="flag ${d<=30?'fr':'fa'}">${d}d</span><span>${i.titles.slice(0,3).join(', ')}</span></div></div>`;}).join(''):'<div class="empty">No projects ending in next 90 days</div>';
+}
+
+function populateFilters(){
+  const ps=[...new Set(EMP.map(e=>e.project).filter(Boolean))].sort();
+  const ts=[...new Set(EMP.map(e=>e.title).filter(Boolean))].sort();
+  const pe=document.getElementById('pf');ps.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;pe.appendChild(o);});
+  const te=document.getElementById('tf');ts.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;te.appendChild(o);});
+}
+
+function setTab(t,el){curTab=t;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderTable();}
+
+function renderTable(){
+  const q=document.getElementById('srch').value.toLowerCase();
+  const pf=document.getElementById('pf').value;
+  const tf=document.getElementById('tf').value;
+  const compact=document.getElementById('ctog').checked;
+  const pd=compact?'6px 18px':'11px 18px';
+  let data=EMP.filter(e=>{
+    if(curTab==='Beach'&&e.status!=='Beach')return false;
+    if(curTab==='Staffed'&&e.status!=='Staffed')return false;
+    if(curTab==='leave'&&e.status!=='Booked'&&!(e.status==='Beach'&&(e.project||'').toLowerCase().includes('leave')))return false;
+    if(pf&&e.project!==pf)return false;
+    if(tf&&e.title!==tf)return false;
+    if(q&&!e.name.toLowerCase().includes(q)&&!(e.project||'').toLowerCase().includes(q)&&!(e.title||'').toLowerCase().includes(q))return false;
+    return true;
+  });
+  document.getElementById('rc').textContent=data.length+' records';
+  const tb=document.getElementById('tb');
+  if(!data.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:28px;font-size:12px;">No results</td></tr>';return;}
+  tb.innerHTML=data.map(e=>{
+    const flag=getFlag(e);
+    const col=ac(e.name);
+    const av=showAv?`<div style="width:28px;height:28px;border-radius:8px;background:${col};display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;margin-right:8px;flex-shrink:0;vertical-align:middle">${ini(e.name)}</div>`:'';
+    const ml=showAv?'margin-left:36px':'';
+    const avCell=hidCols.has('ca')?'':`<td style="padding:${pd};color:var(--text2);font-size:11px;font-family:var(--font-mono)">${fd(e.available_after)}</td>`;
+    const flCell=hidCols.has('cf')?'':`<td style="padding:${pd}">${flag?`<span class="flag f${flag.c}">${flag.t}</span>`:''}</td>`;
+    return`<tr><td style="padding:${pd}">${av}<span class="n-name">${e.name}</span><div class="n-role" style="${ml}">${e.title}</div></td><td style="padding:${pd}"><span class="badge ${bc(e.status)}">${e.status}</span></td><td style="padding:${pd};color:var(--text2);font-size:12px">${e.project||'—'}</td>${avCell}${flCell}<td style="padding:${pd}"><button class="ask-btn" onclick='openEmp(${JSON.stringify(e)})'>Ask AI ↗</button></td></tr>`;
+  }).join('');
+}
+
+function openEmp(emp){
+  curEmp=emp;chatHist=[];
+  document.getElementById('apn').textContent=emp.name;
+  document.getElementById('apt').textContent=emp.title+' · '+emp.status;
+  const av=document.getElementById('apav');av.textContent=ini(emp.name);av.style.background=`linear-gradient(135deg,${ac(emp.name)},${ac(emp.name+'z')})`;
+  document.getElementById('aimsg').innerHTML='';
+  document.getElementById('qb').style.display='flex';
+  document.getElementById('aip').classList.add('open');
+  document.getElementById('ov').classList.add('open');
+  callAI([{role:'user',content:`You are a staffing advisor for a Saudi consulting & digital solutions firm. Analyze: Name: ${emp.name}, Title: ${emp.title}, Status: ${emp.status}, Project: ${emp.project||'none'}, Available after: ${emp.available_after||'unknown'}, Resource type: ${emp.rc||'N/A'}. Give a concise 2-3 sentence assessment: current situation, key risk, and one specific action.`}],true);
+}
+function closePanel(){document.getElementById('aip').classList.remove('open');document.getElementById('ov').classList.remove('open');document.getElementById('qb').style.display='none';}
+function qask(q){document.getElementById('ain').value=q;send();}
+function send(){
+  const inp=document.getElementById('ain');const t=inp.value.trim();if(!t||!curEmp)return;
+  inp.value='';addMsg('u',t);
+  chatHist.push({role:'user',content:t});
+  const ctx=`Context: staffing advisor, Saudi consulting firm. Employee: ${JSON.stringify(curEmp)}. Team: ${EMP.length} staff, ${EMP.filter(e=>e.status==='Beach').length} on beach, ${EMP.filter(e=>e.status==='Staffed').length} staffed.`;
+  callAI([{role:'user',content:ctx},...chatHist],false);
+}
+function addMsg(r,h){
+  const c=document.getElementById('aimsg');const d=document.createElement('div');
+  d.className=r==='u'?'mu':'ma';
+  d.innerHTML=h.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  c.appendChild(d);c.scrollTop=c.scrollHeight;return d;
+}
+async function callAI(msgs,isInit){
+  const btn=document.getElementById('sbtn');btn.disabled=true;
+  const dot=document.createElement('div');dot.className='ma';dot.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
+  const c=document.getElementById('aimsg');c.appendChild(dot);c.scrollTop=99999;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'You are a sharp, practical staffing advisor. Keep responses under 150 words unless asked. No markdown headers. Plain prose only. Be specific and actionable.',messages:msgs})});
+    const d=await r.json();const rep=d.content?.[0]?.text||'No response.';
+    dot.innerHTML=rep.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    if(!isInit)chatHist.push({role:'assistant',content:rep});
+  }catch(e){dot.innerHTML='Connection error. Try again.';}
+  btn.disabled=false;
+}
+
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');document.getElementById('main').classList.toggle('expanded');}
+function toggleTheme(){setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');}
+function setTheme(t){document.documentElement.setAttribute('data-theme',t);document.getElementById('td').classList.toggle('active',t==='dark');document.getElementById('tl').classList.toggle('active',t==='light');}
+function setAccent(c,el){document.documentElement.style.setProperty('--accent',c);document.querySelectorAll('.sw').forEach(s=>s.classList.remove('active'));el.classList.add('active');}
+function setNav(el,n){document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));el.classList.add('active');document.getElementById('ptitle').textContent=n;}
+function toggleSP(){document.getElementById('stp').classList.toggle('open');}
+function toggleCol(col,cb){if(cb.checked)hidCols.delete(col);else hidCols.add(col);renderTable();}
+
+computeMetrics();buildAlerts();buildProjects();populateFilters();renderTable();setTheme('dark');
+</script>
+</body>
+</html>
